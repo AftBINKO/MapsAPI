@@ -1,25 +1,52 @@
+import response
+import requests
 import pygame
+import sys
+import os
 
 
 def ll(x, y):
     return f"{x},{y}"
 
+
 class Map:
-    def __init__(sel):
+    def __init__(self, ui, ll, t):
+        self.lon, self.lat = ll
+        self.t = t
+        self.ui = ui
         print("Добро пожаловать в Яндекс.Карты")
 
-    def load_map(self):
-        pass
+    def start(self):
+        response = self.load_map()
+        self.show(response.content)
 
-    def show(ui, f):
-        if ui == "PyGame":
+    def load_map(self):
+        api_server = "http://static-maps.yandex.ru/1.x/"
+
+        params = {
+            "ll": ll(self.lon, self.lat),
+            "l": self.t
+        }
+        response = requests.get(api_server, params=params)
+
+        if not response:
+            print("Ошибка выполнения запроса:")
+            print(api_server)
+            print("Http статус:", response.status_code, "(", response.reason, ")")
+            sys.exit(1)
+
+        return response
+
+    def show(self, f):
+        if self.ui == "PyGame":
             # Запишем полученное изображение в файл.
             try:
                 map_file = "map.png"
                 with open(map_file, "wb") as file:
-                    file.write(response.content)
+                    file.write(f)
             except IOError as error:
-                print("Ошибка")
+                print(f"Ошибка: {error.__class__.__name__}")
+                sys.exit(2)
 
             # Инициализируем pygame
             pygame.init()
@@ -39,7 +66,12 @@ class Map:
 
 
 def main():
-    pass
+    ui = "PyGame"  # интерфейс, через который будет выводиться карта
+    lon, lan = 50.606852, 55.364880  # широта и долгота
+    t = "map"  # режим карты
+
+    m = Map(ui, (lon, lan), t)
+    m.start()
 
 
 if __name__ == "__main__":

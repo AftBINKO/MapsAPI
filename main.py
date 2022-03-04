@@ -1,6 +1,7 @@
 import response
 import requests
 import pygame
+import math
 import sys
 import os
 
@@ -10,12 +11,19 @@ def ll(x, y):
 
 
 class Map:
-    def __init__(self, ui, ll, t, z, map_file="map.png"):
+    def __init__(self, ui, ll, t, z, fullscreen=False):
         self.lon, self.lat = ll
         self.t = t
         self.z = z
         self.ui = ui
-        self.map_file = map_file
+        self.fullscreen = fullscreen
+
+        self.lat_step = 0.002
+        self.lon_step = 0.002
+        self.coord_to_geo_x = 0.0000428
+        self.coord_to_geo_y = 0.0000428
+
+        self.map_file = "tmp.png"
         print("Добро пожаловать в Яндекс.Карты")
 
     def start(self):
@@ -53,12 +61,16 @@ class Map:
     def update(self):
         response = self.load_map()
         self.create_map(response.content)
+        print(self.lon, self.lat)
 
     def show(self):
         if self.ui == "PyGame":
             # Инициализируем pygame
             pygame.init()
-            screen = pygame.display.set_mode((600, 450))
+            if self.fullscreen:
+                screen = pygame.display.set_mode((600, 450), pygame.FULLSCREEN)
+            else:
+                screen = pygame.display.set_mode((600, 450))
             # Рисуем картинку, загружаемую из только что созданного файла.
             running = True
 
@@ -73,6 +85,23 @@ class Map:
                             self.update()
                         elif event.key == pygame.K_PAGEDOWN and self.z > 1:
                             self.z -= 1
+                            self.update()
+
+                        elif event.key == pygame.K_LEFT and \
+                                self.lon - self.lon_step * math.pow(2, 15 - self.z) > -180:
+                            self.lon -= self.lon_step * math.pow(2, 15 - self.z)
+                            self.update()
+                        elif event.key == pygame.K_RIGHT and \
+                                self.lon + self.lon_step * math.pow(2, 15 - self.z) < 180:
+                            self.lon += self.lon_step * math.pow(2, 15 - self.z)
+                            self.update()
+                        elif event.key == pygame.K_UP and \
+                                self.lat + self.lat_step * math.pow(2, 15 - self.z) < 85:
+                            self.lat += self.lat_step * math.pow(2, 15 - self.z)
+                            self.update()
+                        elif event.key == pygame.K_DOWN and \
+                                self.lat - self.lat_step * math.pow(2, 15 - self.z) > -85:
+                            self.lat -= self.lat_step * math.pow(2, 15 - self.z)
                             self.update()
 
                 screen.blit(pygame.image.load(self.map_file), (0, 0))
@@ -91,8 +120,9 @@ def main():
     lon, lan = 50.606852, 55.364880  # широта и долгота
     t = "map"  # режим карты
     z = 17  # масштабирование
+    fullscreen = False  # вывод карты в полном экране
 
-    m = Map(ui, (lon, lan), t, z)
+    m = Map(ui, (lon, lan), t, z, fullscreen=fullscreen)
     m.start()
 
 

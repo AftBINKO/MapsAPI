@@ -1,9 +1,9 @@
-import response
-import requests
-import pygame
 import math
-import sys
 import os
+import sys
+
+import pygame
+import requests
 
 
 def ll(x, y):
@@ -61,7 +61,6 @@ class Map:
     def update(self):
         response = self.load_map()
         self.create_map(response.content)
-        print(self.lon, self.lat)
 
     def show(self):
         if self.ui == "PyGame":
@@ -71,6 +70,16 @@ class Map:
                 screen = pygame.display.set_mode((600, 450), pygame.FULLSCREEN)
             else:
                 screen = pygame.display.set_mode((600, 450))
+
+            buttons = pygame.sprite.Group()
+            button = pygame.sprite.Sprite()
+            image = pygame.image.load("button.png")
+            button.image = image
+            button.rect = button.image.get_rect()
+            button.rect.x = 25
+            button.rect.y = 25
+            buttons.add(button)
+
             # Рисуем картинку, загружаемую из только что созданного файла.
             running = True
 
@@ -79,7 +88,7 @@ class Map:
                     if event.type == pygame.QUIT:
                         running = False
 
-                    if event.type == pygame.KEYDOWN:
+                    elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_PAGEUP and self.z <= 17:
                             self.z += 1
                             self.update()
@@ -104,7 +113,18 @@ class Map:
                             self.lat -= self.lat_step * math.pow(2, 15 - self.z)
                             self.update()
 
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and \
+                            button.rect.collidepoint(event.pos):
+                        if self.t == "map":
+                            self.t = "sat"
+                        elif self.t == "sat":
+                            self.t = "sat,skl"
+                        else:
+                            self.t = "map"
+                        self.update()
+
                 screen.blit(pygame.image.load(self.map_file), (0, 0))
+                buttons.draw(screen)
                 pygame.display.flip()
 
             pygame.quit()
